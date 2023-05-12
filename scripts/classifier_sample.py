@@ -120,7 +120,7 @@ def create_argparser():
         classifier_path="",
         classifier_scale=1.0,
     )
-    defaults.update(model_and_diffusion_defaults())
+    defaults |= model_and_diffusion_defaults()
     defaults.update(classifier_defaults())
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)

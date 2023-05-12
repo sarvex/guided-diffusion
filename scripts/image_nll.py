@@ -86,7 +86,7 @@ def create_argparser():
     defaults = dict(
         data_dir="", clip_denoised=True, num_samples=1000, batch_size=1, model_path=""
     )
-    defaults.update(model_and_diffusion_defaults())
+    defaults |= model_and_diffusion_defaults()
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
     return parser

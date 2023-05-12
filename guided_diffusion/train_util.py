@@ -108,9 +108,7 @@ class TrainLoop:
             self.ddp_model = self.model
 
     def _load_and_sync_parameters(self):
-        resume_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
-
-        if resume_checkpoint:
+        if resume_checkpoint := find_resume_checkpoint() or self.resume_checkpoint:
             self.resume_step = parse_resume_step_from_filename(resume_checkpoint)
             if dist.get_rank() == 0:
                 logger.log(f"loading model from checkpoint: {resume_checkpoint}...")
@@ -126,8 +124,9 @@ class TrainLoop:
         ema_params = copy.deepcopy(self.mp_trainer.master_params)
 
         main_checkpoint = find_resume_checkpoint() or self.resume_checkpoint
-        ema_checkpoint = find_ema_checkpoint(main_checkpoint, self.resume_step, rate)
-        if ema_checkpoint:
+        if ema_checkpoint := find_ema_checkpoint(
+            main_checkpoint, self.resume_step, rate
+        ):
             if dist.get_rank() == 0:
                 logger.log(f"loading EMA from checkpoint: {ema_checkpoint}...")
                 state_dict = dist_util.load_state_dict(
@@ -171,8 +170,7 @@ class TrainLoop:
 
     def run_step(self, batch, cond):
         self.forward_backward(batch, cond)
-        took_step = self.mp_trainer.optimize(self.opt)
-        if took_step:
+        if took_step := self.mp_trainer.optimize(self.opt):
             self._update_ema()
         self._anneal_lr()
         self.log_step()
@@ -287,9 +285,7 @@ def find_ema_checkpoint(main_checkpoint, step, rate):
         return None
     filename = f"ema_{rate}_{(step):06d}.pt"
     path = bf.join(bf.dirname(main_checkpoint), filename)
-    if bf.exists(path):
-        return path
-    return None
+    return path if bf.exists(path) else None
 
 
 def log_loss_dict(diffusion, ts, losses):

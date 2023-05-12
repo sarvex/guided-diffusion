@@ -88,7 +88,7 @@ def main():
     else:
         val_data = None
 
-    logger.log(f"creating optimizer...")
+    logger.log("creating optimizer...")
     opt = AdamW(mp_trainer.master_params, lr=args.lr, weight_decay=args.weight_decay)
     if args.resume_checkpoint:
         opt_checkpoint = bf.join(
@@ -216,7 +216,7 @@ def create_argparser():
         eval_interval=5,
         save_interval=10000,
     )
-    defaults.update(classifier_and_diffusion_defaults())
+    defaults |= classifier_and_diffusion_defaults()
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
     return parser

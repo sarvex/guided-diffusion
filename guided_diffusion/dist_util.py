@@ -46,9 +46,7 @@ def dev():
     """
     Get the device to use for torch.distributed.
     """
-    if th.cuda.is_available():
-        return th.device(f"cuda")
-    return th.device("cpu")
+    return th.device("cuda") if th.cuda.is_available() else th.device("cpu")
 
 
 def load_state_dict(path, **kwargs):

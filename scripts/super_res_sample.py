@@ -58,8 +58,7 @@ def main():
 
         all_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
         dist.all_gather(all_samples, sample)  # gather not supported with NCCL
-        for sample in all_samples:
-            all_images.append(sample.cpu().numpy())
+        all_images.extend(sample.cpu().numpy() for sample in all_samples)
         logger.log(f"created {len(all_images) * args.batch_size} samples")
 
     arr = np.concatenate(all_images, axis=0)
@@ -109,7 +108,7 @@ def create_argparser():
         base_samples="",
         model_path="",
     )
-    defaults.update(sr_model_and_diffusion_defaults())
+    defaults |= sr_model_and_diffusion_defaults()
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
     return parser

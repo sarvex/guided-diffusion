@@ -95,7 +95,7 @@ class LossType(enum.Enum):
     RESCALED_KL = enum.auto()  # like KL, but rescale to estimate the full VLB
 
     def is_vb(self):
-        return self == LossType.KL or self == LossType.RESCALED_KL
+        return self in [LossType.KL, LossType.RESCALED_KL]
 
 
 class GaussianDiffusion:
@@ -293,9 +293,7 @@ class GaussianDiffusion:
         def process_xstart(x):
             if denoised_fn is not None:
                 x = denoised_fn(x)
-            if clip_denoised:
-                return x.clamp(-1, 1)
-            return x
+            return x.clamp(-1, 1) if clip_denoised else x
 
         if self.model_mean_type == ModelMeanType.PREVIOUS_X:
             pred_xstart = process_xstart(
@@ -363,10 +361,9 @@ class GaussianDiffusion:
         This uses the conditioning strategy from Sohl-Dickstein et al. (2015).
         """
         gradient = cond_fn(x, self._scale_timesteps(t), **model_kwargs)
-        new_mean = (
+        return (
             p_mean_var["mean"].float() + p_mean_var["variance"] * gradient.float()
         )
-        return new_mean
 
     def condition_score(self, cond_fn, p_mean_var, x, t, model_kwargs=None):
         """
@@ -507,10 +504,7 @@ class GaussianDiffusion:
         if device is None:
             device = next(model.parameters()).device
         assert isinstance(shape, (tuple, list))
-        if noise is not None:
-            img = noise
-        else:
-            img = th.randn(*shape, device=device)
+        img = noise if noise is not None else th.randn(*shape, device=device)
         indices = list(range(self.num_timesteps))[::-1]
 
         if progress:
@@ -678,10 +672,7 @@ class GaussianDiffusion:
         if device is None:
             device = next(model.parameters()).device
         assert isinstance(shape, (tuple, list))
-        if noise is not None:
-            img = noise
-        else:
-            img = th.randn(*shape, device=device)
+        img = noise if noise is not None else th.randn(*shape, device=device)
         indices = list(range(self.num_timesteps))[::-1]
 
         if progress:
@@ -762,7 +753,7 @@ class GaussianDiffusion:
 
         terms = {}
 
-        if self.loss_type == LossType.KL or self.loss_type == LossType.RESCALED_KL:
+        if self.loss_type in [LossType.KL, LossType.RESCALED_KL]:
             terms["loss"] = self._vb_terms_bpd(
                 model=model,
                 x_start=x_start,
@@ -773,7 +764,7 @@ class GaussianDiffusion:
             )["output"]
             if self.loss_type == LossType.RESCALED_KL:
                 terms["loss"] *= self.num_timesteps
-        elif self.loss_type == LossType.MSE or self.loss_type == LossType.RESCALED_MSE:
+        elif self.loss_type in [LossType.MSE, LossType.RESCALED_MSE]:
             model_output = model(x_t, self._scale_timesteps(t), **model_kwargs)
 
             if self.model_var_type in [
@@ -807,10 +798,7 @@ class GaussianDiffusion:
             }[self.model_mean_type]
             assert model_output.shape == target.shape == x_start.shape
             terms["mse"] = mean_flat((target - model_output) ** 2)
-            if "vb" in terms:
-                terms["loss"] = terms["mse"] + terms["vb"]
-            else:
-                terms["loss"] = terms["mse"]
+            terms["loss"] = terms["mse"] + terms["vb"] if "vb" in terms else terms["mse"]
         else:
             raise NotImplementedError(self.loss_type)
 

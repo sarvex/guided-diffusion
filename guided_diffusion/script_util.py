@@ -61,7 +61,7 @@ def model_and_diffusion_defaults():
         use_fp16=False,
         use_new_attention_order=False,
     )
-    res.update(diffusion_defaults())
+    res |= diffusion_defaults()
     return res
 
 
@@ -159,10 +159,9 @@ def create_model(
     else:
         channel_mult = tuple(int(ch_mult) for ch_mult in channel_mult.split(","))
 
-    attention_ds = []
-    for res in attention_resolutions.split(","):
-        attention_ds.append(image_size // int(res))
-
+    attention_ds = [
+        image_size // int(res) for res in attention_resolutions.split(",")
+    ]
     return UNetModel(
         image_size=image_size,
         in_channels=3,
@@ -246,10 +245,10 @@ def create_classifier(
     else:
         raise ValueError(f"unsupported image size: {image_size}")
 
-    attention_ds = []
-    for res in classifier_attention_resolutions.split(","):
-        attention_ds.append(image_size // int(res))
-
+    attention_ds = [
+        image_size // int(res)
+        for res in classifier_attention_resolutions.split(",")
+    ]
     return EncoderUNetModel(
         image_size=image_size,
         in_channels=3,
@@ -350,19 +349,16 @@ def sr_create_model(
 ):
     _ = small_size  # hack to prevent unused variable
 
-    if large_size == 512:
-        channel_mult = (1, 1, 2, 2, 4, 4)
-    elif large_size == 256:
+    if large_size in [512, 256]:
         channel_mult = (1, 1, 2, 2, 4, 4)
     elif large_size == 64:
         channel_mult = (1, 2, 3, 4)
     else:
         raise ValueError(f"unsupported large size: {large_size}")
 
-    attention_ds = []
-    for res in attention_resolutions.split(","):
-        attention_ds.append(large_size // int(res))
-
+    attention_ds = [
+        large_size // int(res) for res in attention_resolutions.split(",")
+    ]
     return SuperResModel(
         image_size=large_size,
         in_channels=3,

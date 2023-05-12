@@ -71,10 +71,7 @@ class TimestepEmbedSequential(nn.Sequential, TimestepBlock):
 
     def forward(self, x, emb):
         for layer in self:
-            if isinstance(layer, TimestepBlock):
-                x = layer(x, emb)
-            else:
-                x = layer(x)
+            x = layer(x, emb) if isinstance(layer, TimestepBlock) else layer(x)
         return x
 
 
@@ -888,7 +885,7 @@ class EncoderUNetModel(nn.Module):
         if self.pool.startswith("spatial"):
             results.append(h.type(x.dtype).mean(dim=(2, 3)))
             h = th.cat(results, axis=-1)
-            return self.out(h)
         else:
             h = h.type(x.dtype)
-            return self.out(h)
+
+        return self.out(h)

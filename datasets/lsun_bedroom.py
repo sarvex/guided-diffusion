@@ -27,8 +27,7 @@ def read_images(lmdb_path, image_size):
             h, w, _ = arr.shape
             h_off = (h - image_size) // 2
             w_off = (w - image_size) // 2
-            arr = arr[h_off : h_off + image_size, w_off : w_off + image_size]
-            yield arr
+            yield arr[h_off : h_off + image_size, w_off : w_off + image_size]
 
 
 def dump_images(out_dir, images, prefix):

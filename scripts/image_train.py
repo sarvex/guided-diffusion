@@ -73,7 +73,7 @@ def create_argparser():
         use_fp16=False,
         fp16_scale_growth=1e-3,
     )
-    defaults.update(model_and_diffusion_defaults())
+    defaults |= model_and_diffusion_defaults()
     parser = argparse.ArgumentParser()
     add_dict_to_argparser(parser, defaults)
     return parser
